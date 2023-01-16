@@ -66,7 +66,6 @@ import org.sakaiproject.scorm.navigation.impl.NavigationEvent;
 import org.sakaiproject.scorm.service.api.LearningManagementSystem;
 import org.sakaiproject.scorm.service.api.ScormApplicationService;
 import org.sakaiproject.scorm.service.api.ScormSequencingService;
-import org.sakaiproject.service.gradebook.shared.CommentDefinition;
 import org.sakaiproject.service.gradebook.shared.GradebookExternalAssessmentService;
 import org.sakaiproject.service.gradebook.shared.GradebookService;
 import org.sakaiproject.util.ResourceLoader;
@@ -1391,16 +1390,9 @@ public abstract class ScormApplicationServiceImpl implements ScormApplicationSer
 	protected void updateGradebook(OptionalDouble score, String context, String learnerID, String externalAssessmentID)
 	{
 		GradebookExternalAssessmentService gbeService = gradebookExternalAssessmentService();
-
 		// Gradebook and gradebook item exist, carry on...
 		if (gbeService.isGradebookDefined(context) && gbeService.isExternalAssignmentDefined(context, externalAssessmentID))
 		{
-			GradebookService gbService = gradebookService();
-			long internalAssessmentID = gbeService.getInternalAssessmentID(context, externalAssessmentID).orElse(-1l);
-			CommentDefinition cd = gbService.getAssignmentScoreComment(context, internalAssessmentID, learnerID);
-			String existingComment = cd != null ? StringUtils.trimToEmpty(cd.getCommentText()) : "";
-			String moduleNoScoreRecorded = resourceLoader.getString("moduleNoScoreRecorded");
-
 			if (score.isPresent()) // Module recorded a score...
 			{
 				// A real number with values that is accurate to seven significant decimal figures. The value shall be in the range of -1.0 to 1.0, inclusive.
@@ -1408,23 +1400,8 @@ public abstract class ScormApplicationServiceImpl implements ScormApplicationSer
 
 				// We don't care about the presence of an existing grade; push the new/updated one
 				gbeService.updateExternalAssessmentScore(context, externalAssessmentID, learnerID, "" + rawScore);
-
-				// If there's an existing comment, we need to scan it for the presence of the "no grade recorded" message and remove it, but preserve any instructor added comments
-				if (existingComment.contains(moduleNoScoreRecorded))
-				{
-					String comment = existingComment.replaceAll(moduleNoScoreRecorded, "");
-					gbeService.updateExternalAssessmentComment(context, externalAssessmentID, learnerID, comment);
-				}
-			}
-			else // Module did not record a score...
-			{
-				// If there isn't already a comment indicating that this module didn't record grading data, add it
-				if (!existingComment.contains(moduleNoScoreRecorded))
-				{
-					String comment = moduleNoScoreRecorded + " " + existingComment;
-					gbeService.updateExternalAssessmentComment(context, externalAssessmentID, learnerID, comment);
-				}
 			}
 		}
 	}
+
 }

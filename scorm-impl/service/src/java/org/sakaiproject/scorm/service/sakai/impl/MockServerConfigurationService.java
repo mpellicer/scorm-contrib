@@ -254,10 +254,4 @@ public class MockServerConfigurationService implements ServerConfigurationServic
         throw new UnsupportedOperationException( "Not supported yet." );
     }
 
-    @Override
-    public Set<String> getCommaSeparatedListAsSet(String key)
-    {
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
 }
